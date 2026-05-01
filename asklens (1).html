@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#080810">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AskLens</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080810;
+  --s1:#10101c;
+  --s2:#18182a;
+  --s3:#22223a;
+  --border:rgba(130,120,255,0.12);
+  --border2:rgba(130,120,255,0.25);
+  --accent:#7c6fff;
+  --accent2:#a78bfa;
+  --glow:rgba(124,111,255,0.3);
+  --text:#eeeef8;
+  --muted:#6b6b8a;
+  --muted2:#9090b0;
+  --green:#34d399;
+  --red:#f87171;
+  --yellow:#fbbf24;
+  --mono:'Space Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
+
+/* ── SETUP SCREEN ── */
+#setup{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px;gap:0;
+}
+.brand{text-align:center;margin-bottom:40px}
+.brand-icon{
+  width:72px;height:72px;border-radius:20px;margin:0 auto 16px;
+  background:linear-gradient(135deg,#5c52dd,#9b87f5);
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;
+  box-shadow:0 0 40px rgba(124,111,255,0.4);
+}
+.brand h1{font-size:28px;font-weight:600;letter-spacing:-0.5px}
+.brand p{font-size:14px;color:var(--muted2);margin-top:6px;line-height:1.5}
+
+.card{
+  width:100%;max-width:420px;
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:24px;
+  margin-bottom:16px;
+}
+.card-title{
+  font-size:11px;font-weight:600;letter-spacing:1.2px;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.card-title span{
+  background:var(--s3);border-radius:50%;
+  width:20px;height:20px;display:inline-flex;
+  align-items:center;justify-content:center;
+  font-size:10px;color:var(--accent2);font-family:var(--mono);
+}
+
+.field-label{font-size:13px;color:var(--muted2);margin-bottom:8px;display:block}
+.field-input{
+  width:100%;background:var(--s2);
+  border:1px solid var(--border2);
+  border-radius:10px;padding:12px 14px;
+  color:var(--text);font-size:14px;font-family:var(--mono);
+  outline:none;transition:border 0.2s,box-shadow 0.2s;
+  letter-spacing:0.5px;
+}
+.field-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.field-input::placeholder{color:var(--muted);font-size:12px}
+.field-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+.field-hint a{color:var(--accent2);text-decoration:none}
+
+.field-group{margin-bottom:18px}
+.field-group:last-child{margin-bottom:0}
+
+.btn-primary{
+  width:100%;max-width:420px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;border:none;border-radius:12px;
+  padding:16px;font-size:16px;font-weight:600;font-family:var(--sans);
+  cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;
+  box-shadow:0 4px 24px rgba(124,111,255,0.4);
+  letter-spacing:-0.2px;
+}
+.btn-primary:active{transform:scale(0.97)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+
+.status-row{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--muted);
+  margin-top:12px;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0}
+.dot.on{background:var(--green)}
+.dot.pulse{animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ── MAIN APP ── */
+#app{display:none;flex-direction:column;min-height:100vh}
+
+/* header */
+.header{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  background:rgba(8,8,16,0.9);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.h-logo{display:flex;align-items:center;gap:10px}
+.h-icon{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,#5c52dd,#9b87f5);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.h-name{font-size:17px;font-weight:600}
+.h-right{display:flex;align-items:center;gap:10px}
+.badge{
+  font-size:11px;font-family:var(--mono);
+  padding:4px 10px;border-radius:20px;
+  background:var(--s2);border:1px solid var(--border2);
+  color:var(--muted2);display:flex;align-items:center;gap:5px;
+}
+.settings-btn{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--s2);border:1px solid var(--border);
+  color:var(--muted2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:all 0.2s;
+}
+.settings-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* camera area */
+.camera-wrap{
+  margin-top:64px;
+  position:relative;
+  width:100%;
+  background:#000;
+  overflow:hidden;
+}
+#video{
+  width:100%;display:block;
+  max-height:56vw;
+  object-fit:cover;
+}
+.camera-overlay{
+  position:absolute;inset:0;
+  pointer-events:none;
+}
+/* scanning corners */
+.corner{position:absolute;width:24px;height:24px}
+.corner-tl{top:16px;left:16px;border-top:2px solid var(--accent);border-left:2px solid var(--accent)}
+.corner-tr{top:16px;right:16px;border-top:2px solid var(--accent);border-right:2px solid var(--accent)}
+.corner-bl{bottom:16px;left:16px;border-bottom:2px solid var(--accent);border-left:2px solid var(--accent)}
+.corner-br{bottom:16px;right:16px;border-bottom:2px solid var(--accent);border-right:2px solid var(--accent)}
+
+.scan-line{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:scan 2.5s ease-in-out infinite;
+  opacity:0.6;
+}
+@keyframes scan{
+  0%{top:15%}
+  50%{top:80%}
+  100%{top:15%}
+}
+.scan-line.paused{animation-play-state:paused;opacity:0}
+
+#canvas{display:none}
+
+/* controls */
+.controls{
+  padding:20px 20px 8px;
+  background:var(--s1);
+  border-top:1px solid var(--border);
+}
+.capture-row{display:flex;align-items:center;gap:14px}
+
+.btn-capture{
+  flex:1;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:14px;
+  padding:18px;color:#fff;
+  font-size:15px;font-weight:600;font-family:var(--sans);
+  cursor:pointer;transition:transform 0.15s,opacity 0.2s;
+  box-shadow:0 4px 20px rgba(124,111,255,0.35);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-capture:active{transform:scale(0.97)}
+.btn-capture:disabled{opacity:0.5;cursor:not-allowed}
+
+.btn-flip{
+  width:52px;height:52px;border-radius:14px;
+  background:var(--s2);border:1px solid var(--border2);
+  color:var(--muted2);cursor:pointer;font-size:22px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;flex-shrink:0;
+}
+.btn-flip:active{transform:scale(0.95)}
+
+/* answer area */
+.answer-area{padding:16px 20px 100px;flex:1}
+
+.answer-card{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:14px;
+  animation:fadeUp 0.3s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.answer-header{
+  padding:12px 16px;
+  background:var(--s2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.answer-label{
+  font-size:11px;font-weight:600;letter-spacing:1px;
+  color:var(--muted);text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;
+}
+.answer-time{font-size:11px;color:var(--muted);font-family:var(--mono)}
+
+.answer-img{width:100%;max-height:180px;object-fit:cover;border-bottom:1px solid var(--border)}
+
+.answer-body{padding:16px}
+.answer-text{
+  font-size:15px;line-height:1.7;color:var(--text);
+}
+.answer-text.loading{
+  color:var(--muted2);
+  display:flex;align-items:center;gap:8px;
+}
+
+.tg-sent{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;color:var(--green);
+  margin-top:10px;
+  background:rgba(52,211,153,0.1);
+  padding:4px 10px;border-radius:20px;
+}
+
+.empty-state{
+  text-align:center;padding:48px 24px;
+  color:var(--muted);
+}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:0.4}
+.empty-text{font-size:14px;line-height:1.6}
+
+/* spinner */
+.spinner{
+  width:18px;height:18px;border-radius:50%;
+  border:2px solid rgba(130,120,255,0.2);
+  border-top:2px solid var(--accent);
+  animation:spin 0.8s linear infinite;
+  flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:12px;padding:12px 20px;
+  font-size:13px;color:var(--text);
+  z-index:200;transition:transform 0.3s ease;
+  white-space:nowrap;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.error{border-color:rgba(248,113,113,0.4);color:var(--red)}
+.toast.success{border-color:rgba(52,211,153,0.4);color:var(--green)}
+
+/* error msg */
+.err-msg{
+  background:rgba(248,113,113,0.08);
+  border:1px solid rgba(248,113,113,0.2);
+  border-radius:10px;padding:12px 14px;
+  font-size:13px;color:var(--red);
+  margin-top:8px;display:none;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SETUP SCREEN ══════════════ -->
+<div id="setup">
+  <div class="brand">
+    <div class="brand-icon">🔍</div>
+    <h1>AskLens</h1>
+    <p>Point your camera at any question.<br>Get the answer instantly.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>1</span> Grok API Key</div>
+    <div class="field-group">
+      <label class="field-label">Your xAI Grok API Key</label>
+      <input class="field-input" id="grokKey" type="password" placeholder="xai-xxxxxxxxxxxxxxxx" autocomplete="off">
+      <div class="field-hint">
+        Get your free key at <a href="https://console.x.ai" target="_blank">console.x.ai</a> → API Keys.<br>
+        Uses <strong>grok-2-vision-1212</strong> (reads images).
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>2</span> Telegram Bot (Receiver)</div>
+    <div class="field-group">
+      <label class="field-label">Bot Token</label>
+      <input class="field-input" id="tgToken" type="password" placeholder="1234567890:ABCDEFxxxxxxxx" autocomplete="off">
+      <div class="field-hint">
+        Message <a href="https://t.me/BotFather" target="_blank">@BotFather</a> on Telegram → /newbot → copy the token.
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Your Chat ID</label>
+      <input class="field-input" id="tgChatId" type="text" placeholder="123456789" autocomplete="off">
+      <div class="field-hint">
+        Message <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> on Telegram → it replies with your Chat ID.
+      </div>
+    </div>
+  </div>
+
+  <div id="setupErr" class="err-msg">⚠ Please fill in at least the Grok API key.</div>
+
+  <button class="btn-primary" id="startBtn" onclick="startApp()">Start AskLens →</button>
+
+  <div class="status-row" style="justify-content:center;margin-top:16px">
+    <div class="dot"></div>
+    <span>Keys are saved only on your device (localStorage)</span>
+  </div>
+</div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="app">
+  <div class="header">
+    <div class="h-logo">
+      <div class="h-icon">🔍</div>
+      <span class="h-name">AskLens</span>
+    </div>
+    <div class="h-right">
+      <div class="badge">
+        <div class="dot on" id="tgDot"></div>
+        <span id="tgLabel">TG</span>
+      </div>
+      <button class="settings-btn" onclick="resetApp()" title="Settings">⚙</button>
+    </div>
+  </div>
+
+  <div class="camera-wrap" id="cameraWrap">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+    <div class="camera-overlay">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <div class="scan-line" id="scanLine"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="capture-row">
+      <button class="btn-capture" id="captureBtn" onclick="captureAndAsk()">
+        <span>📷</span> Capture & Ask Grok
+      </button>
+      <button class="btn-flip" onclick="flipCamera()" title="Flip camera">🔄</button>
+    </div>
+  </div>
+
+  <div class="answer-area" id="answerArea">
+    <div class="empty-state">
+      <div class="empty-icon">📖</div>
+      <div class="empty-text">Point camera at a question<br>and tap Capture & Ask Grok</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+let stream = null;
+let facingMode = 'environment'; // back camera
+let isProcessing = false;
+
+// ── CONFIG ──
+let CFG = { grokKey:'', tgToken:'', tgChatId:'' };
+
+// ── LOAD SAVED KEYS ──
+function loadSaved() {
+  const saved = localStorage.getItem('asklens_cfg');
+  if (saved) {
+    try { CFG = JSON.parse(saved); } catch(e){}
+  }
+  if (CFG.grokKey) document.getElementById('grokKey').value = CFG.grokKey;
+  if (CFG.tgToken) document.getElementById('tgToken').value = CFG.tgToken;
+  if (CFG.tgChatId) document.getElementById('tgChatId').value = CFG.tgChatId;
+}
+
+// ── START APP ──
+async function startApp() {
+  const grokKey = document.getElementById('grokKey').value.trim();
+  const tgToken = document.getElementById('tgToken').value.trim();
+  const tgChatId = document.getElementById('tgChatId').value.trim();
+  const err = document.getElementById('setupErr');
+
+  if (!grokKey) { err.style.display='block'; return; }
+  err.style.display='none';
+
+  CFG = { grokKey, tgToken, tgChatId };
+  localStorage.setItem('asklens_cfg', JSON.stringify(CFG));
+
+  // Show app
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('app').style.flexDirection = 'column';
+
+  // Update TG badge
+  if (tgToken && tgChatId) {
+    document.getElementById('tgDot').className = 'dot on';
+    document.getElementById('tgLabel').textContent = 'TG ON';
+  } else {
+    document.getElementById('tgDot').className = 'dot';
+    document.getElementById('tgLabel').textContent = 'TG OFF';
+  }
+
+  await startCamera();
+}
+
+// ── CAMERA ──
+async function startCamera() {
+  const video = document.getElementById('video');
+  try {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+
+    // Explicitly request permission first
+    const permResult = await navigator.permissions.query({name:'camera'}).catch(()=>({state:'prompt'}));
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode, width:{ideal:1280}, height:{ideal:720} },
+      audio: false
+    });
+
+    video.srcObject = stream;
+
+    // Fix black screen — force play after metadata loads
+    video.onloadedmetadata = () => {
+      video.play().catch(()=>{});
+    };
+
+    // Extra fallback for Android black screen
+    setTimeout(() => {
+      if (video.paused) video.play().catch(()=>{});
+    }, 800);
+
+  } catch(e) {
+    if (e.name === 'NotAllowedError') {
+      document.getElementById('cameraWrap').innerHTML = `
+        <div style="padding:32px;text-align:center;color:var(--red);background:#000;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+          <div style="font-size:36px">📵</div>
+          <div style="font-weight:600">Camera Permission Denied</div>
+          <div style="font-size:13px;color:var(--muted2);line-height:1.6">Go to Chrome → tap 🔒 in address bar → Site Settings → Camera → Allow → then refresh</div>
+          <button onclick="startCamera()" style="margin-top:8px;padding:10px 20px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;cursor:pointer">Try Again</button>
+        </div>`;
+    } else {
+      showToast('Camera error: ' + e.message, 'error');
+    }
+  }
+}
+
+function flipCamera() {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  startCamera();
+}
+
+// ── CAPTURE & ASK ──
+async function captureAndAsk() {
+  if (isProcessing) return;
+  isProcessing = true;
+
+  const btn = document.getElementById('captureBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Thinking...';
+
+  // Pause scan animation
+  document.getElementById('scanLine').classList.add('paused');
+
+  // Capture frame
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  const imageDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  const base64 = imageDataUrl.split(',')[1];
+
+  // Create answer card immediately
+  const cardId = 'card_' + Date.now();
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  const area = document.getElementById('answerArea');
+  area.innerHTML = `
+    <div class="answer-card" id="${cardId}">
+      <div class="answer-header">
+        <div class="answer-label">🤖 Grok's Answer</div>
+        <div class="answer-time">${now}</div>
+      </div>
+      <img class="answer-img" src="${imageDataUrl}" alt="captured">
+      <div class="answer-body">
+        <div class="answer-text loading"><div class="spinner"></div> Reading question with Grok Vision...</div>
+      </div>
+    </div>
+  `;
+
+  try {
+    // ── CALL GROK API ──
+    const res = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + CFG.grokKey
+      },
+      body: JSON.stringify({
+        model: 'grok-2-vision-1212',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: 'data:image/jpeg;base64,' + base64 }
+            },
+            {
+              type: 'text',
+              text: 'Look at this image. Find the question or problem in it. Provide a clear, concise, and accurate answer. If it is a math problem, solve it step by step. If it is a multiple choice question, state the correct option and explain briefly why. Be direct and helpful.'
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Grok API error ' + res.status);
+    }
+
+    const answer = data.choices?.[0]?.message?.content || 'No answer received.';
+
+    // Update card
+    const card = document.getElementById(cardId);
+    let tgHtml = '';
+
+    // ── SEND TO TELEGRAM ──
+    if (CFG.tgToken && CFG.tgChatId) {
+      try {
+        await sendToTelegram(answer, imageDataUrl);
+        tgHtml = '<div class="tg-sent">✈ Sent to Telegram</div>';
+      } catch(e) {
+        tgHtml = '';
+        showToast('Telegram send failed', 'error');
+      }
+    }
+
+    card.querySelector('.answer-body').innerHTML = `
+      <div class="answer-text">${escHtml(answer)}</div>
+      ${tgHtml}
+    `;
+
+  } catch(e) {
+    const card = document.getElementById(cardId);
+    card.querySelector('.answer-body').innerHTML = `
+      <div class="answer-text" style="color:var(--red)">⚠ Error: ${escHtml(e.message)}</div>
+    `;
+    showToast('Error: ' + e.message, 'error');
+  }
+
+  // Re-enable
+  btn.disabled = false;
+  btn.innerHTML = '<span>📷</span> Capture & Ask Grok';
+  document.getElementById('scanLine').classList.remove('paused');
+  isProcessing = false;
+}
+
+// ── TELEGRAM ──
+async function sendToTelegram(answer, imageDataUrl) {
+  // Send text answer
+  const msg = `🔍 *AskLens Answer*\n\n${answer}\n\n_Answered by Grok Vision_`;
+  
+  await fetch(`https://api.telegram.org/bot${CFG.tgToken}/sendMessage`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      chat_id: CFG.tgChatId,
+      text: msg,
+      parse_mode: 'Markdown'
+    })
+  });
+
+  // Also send the photo
+  const blob = dataURLtoBlob(imageDataUrl);
+  const form = new FormData();
+  form.append('chat_id', CFG.tgChatId);
+  form.append('photo', blob, 'question.jpg');
+  form.append('caption', '📷 Question photo from AskLens');
+
+  await fetch(`https://api.telegram.org/bot${CFG.tgToken}/sendPhoto`, {
+    method: 'POST',
+    body: form
+  });
+}
+
+// ── HELPERS ──
+function dataURLtoBlob(dataurl) {
+  const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length, u8 = new Uint8Array(n);
+  while(n--) u8[n] = bstr.charCodeAt(n);
+  return new Blob([u8], {type:mime});
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  setTimeout(() => t.className='toast', 3000);
+}
+
+function resetApp() {
+  if (confirm('Go back to settings?')) {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    document.getElementById('app').style.display='none';
+    document.getElementById('setup').style.display='flex';
+  }
+}
+
+// ── INIT ──
+loadSaved();
+</script>
+</body>
+</html>
